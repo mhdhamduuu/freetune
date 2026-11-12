@@ -17,7 +17,6 @@ enum AudiusError: LocalizedError {
 final class AudiusAPI {
     static let shared = AudiusAPI()
 
-    private var cachedHost: String?
     private let appName = "FreeTune"
 
     static let genres = [
@@ -25,23 +24,60 @@ final class AudiusAPI {
         "Jazz", "Classical", "Reggae", "Folk", "Latin", "Lo-Fi"
     ]
 
-    /// Audius redirects api.audius.co to a live discovery node.
+    /// Audius redirects api.audius.co to a live discovery node. The working
+    /// host is cached in UserDefaults so later launches skip discovery
+    /// entirely (this was the #1 cause of slow first loads).
     func host() async throws -> String {
-        if let cachedHost { return cachedHost }
+        if let saved = UserDefaults.standard.string(forKey: "audius.cachedHost"), !saved.isEmpty {
+            return saved
+        }
         struct HostList: Decodable { let data: [String]? }
-        let (data, _) = try await URLSession.shared.data(
-            from: URL(string: "https://api.audius.co")!
-        )
+        var request = URLRequest(url: URL(string: "https://api.audius.co")!)
+        request.timeoutInterval = 15
+        let (data, _) = try await URLSession.shared.data(for: request)
         let decoded = try JSONDecoder().decode(HostList.self, from: data)
-        guard let first = decoded.data?.first, !first.isEmpty else {
+        guard let pick = decoded.data?.filter({ !$0.isEmpty }).randomElement() else {
             throw AudiusError.unavailable
         }
-        cachedHost = first
-        return first
+        UserDefaults.standard.set(pick, forKey: "audius.cachedHost")
+        return pick
+    }
+
+    private func forgetHost() {
+        UserDefaults.standard.removeObject(forKey: "audius.cachedHost")
     }
 
     /// Trending tracks, genre filtering or full-text search.
+    /// One automatic retry with a FRESH host if a request fails —
+    /// a stale cached host no longer leaves the app stuck/blank.
     func fetchTracks(
+        search: String? = nil,
+        genre: String? = nil,
+        timeRange: String? = nil,
+        limit: Int = 30,
+        offset: Int = 0
+    ) async throws -> [Track] {
+        do {
+            return try await requestTracks(
+                search: search,
+                genre: genre,
+                timeRange: timeRange,
+                limit: limit,
+                offset: offset
+            )
+        } catch {
+            forgetHost()
+            return try await requestTracks(
+                search: search,
+                genre: genre,
+                timeRange: timeRange,
+                limit: limit,
+                offset: offset
+            )
+        }
+    }
+
+    private func requestTracks(
         search: String? = nil,
         genre: String? = nil,
         timeRange: String? = nil,
@@ -70,7 +106,7 @@ final class AudiusAPI {
         components.queryItems = items
 
         var request = URLRequest(url: components.url!)
-        request.timeoutInterval = 30
+        request.timeoutInterval = 15
 
         let (data, response) = try await URLSession.shared.data(for: request)
         if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {

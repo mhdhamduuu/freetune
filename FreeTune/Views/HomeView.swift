@@ -18,6 +18,8 @@ struct HomeView: View {
         ("New This Month", .fresh("month")),
         ("New This Year", .fresh("year")),
         ("Malayalam", .search("malayalam")),
+        ("Malayalam Rap", .search("malayalam rap")),
+        ("Mollywood Covers", .search("malayalam cover")),
         ("Kerala", .search("kerala")),
         ("Devotional", .search("devotional")),
         ("Tamil", .search("tamil"))
