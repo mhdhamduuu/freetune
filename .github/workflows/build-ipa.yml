@@ -22,8 +22,7 @@ jobs:
             -target FreeTune \
             -configuration Release \
             -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
-            -derivedDataPath build/DerivedData \
+            SYMROOT="$(pwd)/build/Products" \
             build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
@@ -32,7 +31,7 @@ jobs:
       - name: Package unsigned IPA
         run: |
           mkdir -p build/Payload
-          cp -R "build/DerivedData/Build/Products/Release-iphoneos/FreeTune.app" build/Payload/
+          cp -R "build/Products/Release-iphoneos/FreeTune.app" build/Payload/
           cd build
           zip -qry FreeTune-unsigned.ipa Payload
           rm -rf Payload
