@@ -100,7 +100,7 @@ final class PlayerManager: NSObject, ObservableObject {
 
     private func observeTrackEnd() {
         NotificationCenter.default.addObserver(
-            forName: AVPlayerItem.didPlayToEndTime,
+            forName: .AVPlayerItemDidPlayToEndTime,
             object: nil,
             queue: .main
         ) { [weak self] _ in

@@ -23,6 +23,7 @@ struct JamendoRawTrack: Decodable, Hashable {
     let artistImage: URL?
     let albumName: String?
     let albumImage: URL?
+    let image: URL?
     let audio: URL?
     let audioDownload: URL?
     let audioDownloadAllowed: Bool?
