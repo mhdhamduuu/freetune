@@ -103,8 +103,49 @@ struct SearchView: View {
                     .font(.headline)
                 grid(genres: GenrePalette.genres) { CatalogSource.jamendoGenre($0) }
             }
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Browse — Internet Archive · 100% free songs")
+                    .font(.headline)
+                LazyVGrid(
+                    columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible())],
+                    spacing: 10
+                ) {
+                    archiveCard("Netlabel Music", "electronic") { .archiveCollection("netlabels") }
+                    archiveCard("Free Classical", "classical") { .archiveCollection("musopen") }
+                    archiveCard("Vintage 78s", "jazz") { .archiveCollection("georgeblood") }
+                    archiveCard("78s India", "folk") { .archiveIndia78s }
+                }
+            }
         }
         .padding(.horizontal)
+    }
+
+    private func archiveCard(
+        _ title: String,
+        _ paletteKey: String,
+        source: @escaping () -> CatalogSource
+    ) -> some View {
+        Button {
+            query = ""
+            viewModel.updateSource(source())
+        } label: {
+            ZStack(alignment: .bottomLeading) {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: GenrePalette.colors(for: paletteKey),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(height: 86)
+                Text(title)
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding(10)
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     private func grid(

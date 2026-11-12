@@ -10,7 +10,9 @@ struct HomeView: View {
     /// Instant channels at the top of the chip row.
     enum QuickChannel {
         case fresh(String)      // Audius live trending window
-        case search(String)     // keyword search across both catalogs
+        case search(String)     // keyword search across all catalogs
+        case archive(String)    // Internet Archive free-music collection
+        case india78s           // vintage Indian-language 78 rpm records
     }
 
     private let quickChannels: [(title: String, channel: QuickChannel)] = [
@@ -22,7 +24,15 @@ struct HomeView: View {
         ("Mollywood Covers", .search("malayalam cover")),
         ("Kerala", .search("kerala")),
         ("Devotional", .search("devotional")),
-        ("Tamil", .search("tamil"))
+        ("Tamil", .search("tamil")),
+        ("Hindi", .search("hindi")),
+        ("Carnatic", .search("carnatic")),
+        ("Sufi", .search("sufi")),
+        ("Punjabi", .search("punjabi")),
+        ("Free Archive", .archive("netlabels")),
+        ("Classical Free", .archive("musopen")),
+        ("Vintage 78s", .archive("georgeblood")),
+        ("78s India", .india78s)
     ]
 
     enum MusicProvider: String, CaseIterable, Identifiable {
@@ -95,6 +105,10 @@ struct HomeView: View {
                             viewModel.updateSource(.audiusFresh(range), force: true)
                         case .search(let term):
                             viewModel.updateSource(.searchAll(term), force: true)
+                        case .archive(let collection):
+                            viewModel.updateSource(.archiveCollection(collection), force: true)
+                        case .india78s:
+                            viewModel.updateSource(.archiveIndia78s, force: true)
                         }
                     }
                 }

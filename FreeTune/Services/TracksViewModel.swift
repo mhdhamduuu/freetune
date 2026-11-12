@@ -7,6 +7,8 @@ enum CatalogSource: Equatable {
     case audiusTrending
     case audiusGenre(String)
     case audiusFresh(String)   // trending window: week / month / year
+    case archiveCollection(String)  // Internet Archive free-music collection
+    case archiveIndia78s            // vintage Indian-language 78 rpm records
     case searchAll(String)
 
     var isSearch: Bool {
@@ -15,8 +17,8 @@ enum CatalogSource: Equatable {
     }
 }
 
-/// Paginated list loader for both catalogs. Search queries Jamendo and
-/// Audius in parallel and merges the results.
+/// Paginated list loader for all three catalogs. Search queries Jamendo,
+/// Audius and the Internet Archive in parallel and merges the results.
 @MainActor
 final class TracksViewModel: ObservableObject {
     @Published private(set) var tracks: [Track] = []
@@ -137,14 +139,27 @@ final class TracksViewModel: ObservableObject {
                 limit: limit,
                 offset: offset
             )
+        case .archiveCollection(let collection):
+            return try await InternetArchiveAPI.shared.fetchCollectionTracks(
+                collection: collection,
+                limit: limit,
+                offset: offset
+            )
+        case .archiveIndia78s:
+            return try await InternetArchiveAPI.shared.fetchCollectionTracks(
+                collection: "georgeblood",
+                extraQuery: "(malayalam OR hindi OR tamil OR telugu)",
+                limit: limit,
+                offset: offset
+            )
         case .searchAll(let query):
             // Deeper page for keyword channels/search: 100 per catalog.
             return try await searchBoth(query: query, limit: 100)
         }
     }
 
-    /// Jamendo + Audius in parallel. If one catalog fails (e.g. no key yet),
-    /// results from the other are still returned.
+    /// Jamendo + Audius + Internet Archive in parallel. If one catalog fails
+    /// (e.g. no key yet), results from the other catalogs are still returned.
     private func searchBoth(query: String, limit: Int) async throws -> [Track] {
         let jamendoTask = Task { () -> [Track] in
             let audioformat = SoundSettings.shared.hifi ? "flac" : nil
@@ -156,6 +171,9 @@ final class TracksViewModel: ObservableObject {
         }
         let audiusTask = Task { () -> [Track] in
             try await AudiusAPI.shared.fetchTracks(search: query, limit: limit)
+        }
+        let archiveTask = Task { () -> [Track] in
+            try await InternetArchiveAPI.shared.fetchCCTracks(search: query, limit: 30)
         }
 
         var results: [Track] = []
@@ -169,6 +187,11 @@ final class TracksViewModel: ObservableObject {
             results += try await audiusTask.value
         } catch {
             firstError = firstError ?? error
+        }
+        do {
+            results += try await archiveTask.value
+        } catch {
+            // Archive is a bonus catalog — never block search results on it.
         }
 
         if results.isEmpty, let error = firstError {

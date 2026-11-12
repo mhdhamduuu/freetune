@@ -5,6 +5,7 @@ import Foundation
 enum TrackSource: String, Codable, Hashable {
     case jamendo
     case audius
+    case archive
 }
 
 // MARK: - Jamendo raw wire format
@@ -82,6 +83,35 @@ struct Track: Identifiable, Codable, Hashable {
             audioDownload: raw.audioDownload,
             audioDownloadAllowed: raw.audioDownloadAllowed ?? true,
             licenseURL: raw.licenseURL
+        )
+    }
+
+    /// Internet Archive item — identifier + the item's best MP3 file.
+    /// Archive files are free-to-share, so the stream URL is also the download.
+    static func archive(
+        identifier: String,
+        title: String,
+        creator: String?,
+        duration: Int?,
+        audioURL: URL?
+    ) -> Track {
+        let artwork = URL(string: "https://archive.org/services/img/\(identifier)")
+        let artist = creator.flatMap { value in
+            value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : value
+        } ?? "Internet Archive"
+        return Track(
+            id: "ia-\(identifier)",
+            source: .archive,
+            name: title,
+            artistName: artist,
+            albumName: title,
+            duration: duration,
+            image: artwork,
+            albumImage: artwork,
+            audio: audioURL,
+            audioDownload: audioURL,
+            audioDownloadAllowed: true,
+            licenseURL: nil
         )
     }
 
