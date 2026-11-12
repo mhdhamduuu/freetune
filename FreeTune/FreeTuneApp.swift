@@ -50,6 +50,8 @@ struct RootView: View {
                 .tabItem { Label("Search", systemImage: "magnifyingglass") }
             LibraryView()
                 .tabItem { Label("Library", systemImage: "square.stack.fill") }
+            OfflineRadioView()
+                .tabItem { Label("Radio", systemImage: "antenna.radiowaves.left.and.right") }
             SettingsView()
                 .tabItem { Label("Settings", systemImage: "gearshape.fill") }
         }
