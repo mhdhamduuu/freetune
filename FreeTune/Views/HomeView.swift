@@ -39,8 +39,10 @@ struct HomeView: View {
                     providerPicker
                     if let top = viewModel.tracks.first {
                         HeroCard(track: top, tracks: viewModel.tracks)
+                            .entrance(delay: 0.05)
                     }
                     genreChips
+                        .entrance(delay: 0.15)
                     TracksList(viewModel: viewModel)
                 }
                 .padding(.top, 6)
@@ -120,11 +122,30 @@ struct HomeView: View {
                 .fontWeight(active ? .bold : .regular)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 7)
-                .background(active ? Color.accentColor : Color(.secondarySystemBackground))
+                .background {
+                    if active {
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [GlassPalette.pink, GlassPalette.violet],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .shadow(color: GlassPalette.pink.opacity(0.45), radius: 8, y: 3)
+                    } else {
+                        Capsule().fill(.ultraThinMaterial)
+                    }
+                }
+                .overlay(
+                    Capsule().stroke(
+                        .white.opacity(active ? 0.35 : 0.12),
+                        lineWidth: 1
+                    )
+                )
                 .foregroundColor(active ? .white : .primary)
-                .clipShape(Capsule())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SpringPressStyle(scale: 0.92))
     }
 }
 
@@ -161,6 +182,7 @@ struct HeroCard: View {
                         endPoint: .bottom
                     )
                 )
+                .overlay(Shine())
                 VStack(alignment: .leading, spacing: 3) {
                     Text("FEATURED")
                         .font(.caption2)
@@ -180,6 +202,18 @@ struct HeroCard: View {
                 .padding(14)
             }
             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [.white.opacity(0.35), .white.opacity(0.05), .white.opacity(0.16)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
+            .shadow(color: .black.opacity(0.35), radius: 18, x: 0, y: 10)
             .padding(.horizontal)
         }
         .buttonStyle(.plain)

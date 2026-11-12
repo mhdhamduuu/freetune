@@ -14,7 +14,7 @@ struct NowPlayingView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                ImmersiveBackdrop(track: player.currentTrack ?? .placeholder)
+                ImmersiveBackdrop(track: player.currentTrack ?? .placeholder, active: player.isPlaying)
                 VStack(spacing: 0) {
                     header
                     Spacer(minLength: 4)
@@ -69,29 +69,46 @@ struct NowPlayingView: View {
         let side = max(140, min(320, width - 56, height * 0.36))
         return TrackArtwork(track: player.currentTrack ?? .placeholder, size: side)
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .shadow(color: .black.opacity(0.5), radius: 24, x: 0, y: 14)
+            .pulseGlow(active: player.isPlaying)
+            .scaleEffect(player.isPlaying ? 1.015 : 1.0)
+            .animation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true), value: player.isPlaying)
+            .id(player.currentTrack?.id ?? "idle")
+            .transition(.scale(scale: 0.93).combined(with: .opacity))
+            .animation(.spring(response: 0.5, dampingFraction: 0.8), value: player.currentTrack?.id)
     }
 
     private var titleBlock: some View {
         let track = player.currentTrack ?? .placeholder
         return VStack(spacing: 5) {
-            Text(track.name)
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-            Text(track.artistName)
-                .font(.body)
-                .foregroundColor(.white.opacity(0.65))
-                .lineLimit(1)
+            ZStack {
+                if track.name.count > 30 {
+                    MarqueeText(text: track.name, font: .title2.weight(.bold), color: .white, speed: 26)
+                        .frame(height: 30)
+                } else {
+                    ShimmerTitle(text: track.name, font: .title2.weight(.bold), active: player.isPlaying)
+                }
+            }
+            .id(track.id)
+            .transition(.asymmetric(
+                insertion: .move(edge: .trailing).combined(with: .opacity),
+                removal: .opacity
+            ))
+            .animation(.spring(response: 0.55, dampingFraction: 0.85), value: track.id)
+
+            TimelineView(.animation(minimumInterval: 1.0 / 20.0)) { timeline in
+                let breathe = 0.62 + 0.16 * sin(timeline.date.timeIntervalSinceReferenceDate * 1.1)
+                Text(track.artistName)
+                    .font(.body)
+                    .foregroundColor(.white.opacity(breathe))
+                    .lineLimit(1)
+            }
         }
         .padding(.horizontal, 30)
     }
 
     private var scrubber: some View {
         VStack(spacing: 4) {
-            Slider(
+            GlassSlider(
                 value: Binding(
                     get: {
                         scrubbing
@@ -103,7 +120,7 @@ struct NowPlayingView: View {
                         scrubPosition = newValue
                     }
                 ),
-                in: 0...max(player.duration, 0.001),
+                range: 0...max(player.duration, 0.001),
                 onEditingChanged: { editing in
                     if !editing {
                         player.seek(to: scrubPosition)
@@ -111,7 +128,6 @@ struct NowPlayingView: View {
                     }
                 }
             )
-            .tint(.white)
             .padding(.horizontal, 28)
             HStack {
                 Text(player.currentTime.asTimeString)
@@ -153,6 +169,7 @@ struct NowPlayingView: View {
                 Image(systemName: player.isPlaying ? "pause.circle.fill" : "play.circle.fill")
                     .font(.system(size: 66))
                     .foregroundColor(.white)
+                    .scaleEffect(player.isPlaying ? 1.0 : 0.92)
             }
             Button {
                 player.next()
@@ -173,6 +190,8 @@ struct NowPlayingView: View {
                     )
             }
         }
+        .buttonStyle(SpringPressStyle(scale: 0.88))
+        .animation(.spring(response: 0.32, dampingFraction: 0.6), value: player.isPlaying)
         .padding(.top, 6)
     }
 
@@ -205,7 +224,10 @@ struct NowPlayingView: View {
                     .foregroundColor(.white.opacity(0.85))
             }
         }
-        .padding(.horizontal, 34)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 8)
+        .glassCard(cornerRadius: 16)
+        .padding(.horizontal, 18)
         .padding(.top, 10)
         .padding(.bottom, 12)
     }
@@ -223,6 +245,7 @@ struct NowPlayingView: View {
 
 struct ImmersiveBackdrop: View {
     let track: Track
+    var active: Bool = false
 
     var body: some View {
         ZStack {
@@ -244,6 +267,7 @@ struct ImmersiveBackdrop: View {
                     endPoint: .bottomTrailing
                 )
             }
+            LiquidAmbience(active: active)
             LinearGradient(
                 colors: [Color.black.opacity(0.15), Color.black.opacity(0.75)],
                 startPoint: .top,
