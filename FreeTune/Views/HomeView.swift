@@ -32,7 +32,10 @@ struct HomeView: View {
         ("Free Archive", .archive("netlabels")),
         ("Classical Free", .archive("musopen")),
         ("Vintage 78s", .archive("georgeblood")),
-        ("78s India", .india78s)
+        ("78s India", .india78s),
+        ("Malayalam Lofi", .search("malayalam lofi")),
+        ("Malayalam Remix", .search("malayalam remix")),
+        ("Chenda Melam", .search("chenda melam"))
     ]
 
     enum MusicProvider: String, CaseIterable, Identifiable {
