@@ -70,8 +70,6 @@ struct NowPlayingView: View {
         return TrackArtwork(track: player.currentTrack ?? .placeholder, size: side)
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             .pulseGlow(active: player.isPlaying)
-            .scaleEffect(player.isPlaying ? 1.015 : 1.0)
-            .animation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true), value: player.isPlaying)
             .id(player.currentTrack?.id ?? "idle")
             .transition(.scale(scale: 0.93).combined(with: .opacity))
             .animation(.spring(response: 0.5, dampingFraction: 0.8), value: player.currentTrack?.id)

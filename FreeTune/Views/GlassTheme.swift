@@ -219,23 +219,18 @@ struct LiquidAmbience: View {
             let screen = UIScreen.main.bounds
             let amp: CGFloat = active ? 1 : 0.45
             ZStack {
-                blob(
-                    color: GlassPalette.violet,
-                    center: CGPoint(
-                        x: screen.width * (0.30 + 0.16 * CGFloat(sin(t * 0.33)) * amp),
-                        y: screen.height * (0.28 + 0.12 * CGFloat(cos(t * 0.21)) * amp)
-                    ),
-                    radius: screen.width * 0.55
-                )
-                blob(
-                    color: GlassPalette.pink,
-                    center: CGPoint(
-                        x: screen.width * (0.72 + 0.14 * CGFloat(cos(t * 0.27 + 2)) * amp),
-                        y: screen.height * (0.62 + 0.14 * CGFloat(sin(t * 0.24 + 1)) * amp)
-                    ),
-                    radius: screen.width * 0.48
-                )
+                blob(color: GlassPalette.violet, radius: screen.width * 0.55)
+                    .offset(
+                        x: screen.width * (-0.20 + 0.16 * CGFloat(sin(t * 0.33)) * amp),
+                        y: screen.height * (-0.22 + 0.12 * CGFloat(cos(t * 0.21)) * amp)
+                    )
+                blob(color: GlassPalette.pink, radius: screen.width * 0.48)
+                    .offset(
+                        x: screen.width * (0.22 + 0.14 * CGFloat(cos(t * 0.27 + 2)) * amp),
+                        y: screen.height * (0.12 + 0.14 * CGFloat(sin(t * 0.24 + 1)) * amp)
+                    )
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .blur(radius: 36)
             .blendMode(.plusLighter)
             .opacity(active ? 0.85 : 0.55)
@@ -244,7 +239,7 @@ struct LiquidAmbience: View {
         .ignoresSafeArea()
     }
 
-    private func blob(color: Color, center: CGPoint, radius: CGFloat) -> some View {
+    private func blob(color: Color, radius: CGFloat) -> some View {
         Circle()
             .fill(
                 RadialGradient(
@@ -255,7 +250,6 @@ struct LiquidAmbience: View {
                 )
             )
             .frame(width: radius * 2, height: radius * 2)
-            .position(center)
     }
 }
 

@@ -408,16 +408,21 @@ final class PlayerManager: NSObject, ObservableObject {
     }
 
     private func loadStandardFallback(for track: Track) {
+        let trackID = track.id
         Task {
             do {
-                let rawID = track.id.replacingOccurrences(of: "jm-", with: "")
+                let rawID = trackID.replacingOccurrences(of: "jm-", with: "")
                 let results = try await JamendoAPI.shared.fetchTracks(ids: [rawID])
                 guard let standard = results.first else {
                     throw JamendoError.api(0, "track unavailable")
                 }
                 await MainActor.run {
-                    if queue.indices.contains(currentIndex) {
-                        queue[currentIndex] = standard
+                    // User may have skipped to another song while we fetched —
+                    // only swap in the fallback if we're still on that track.
+                    guard currentTrack?.id == trackID else { return }
+                    queue[currentIndex] = standard
+                    if let originalIndex = originalQueue.firstIndex(where: { $0.id == trackID }) {
+                        originalQueue[originalIndex] = standard
                     }
                     let resume = max(currentTime, 0)
                     if let local = DownloadManager.shared.localFileURL(for: standard) {
@@ -435,8 +440,10 @@ final class PlayerManager: NSObject, ObservableObject {
                 }
             } catch {
                 await MainActor.run {
-                    isLoading = false
-                    playbackErrorMessage = "This track couldn't be played."
+                    if currentTrack?.id == trackID {
+                        isLoading = false
+                        playbackErrorMessage = "This track couldn't be played."
+                    }
                 }
             }
         }

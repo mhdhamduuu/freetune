@@ -12,7 +12,7 @@ struct NowPlayingBar: View {
                     TrackArtwork(track: track, size: 42)
                     VStack(alignment: .leading, spacing: 2) {
                         MarqueeText(text: track.name, font: .footnote.weight(.semibold), color: .primary, speed: 22)
-                            .frame(height: 15)
+                            .frame(height: 16)
                         Text(track.artistName)
                             .font(.caption2)
                             .foregroundColor(.secondary)
